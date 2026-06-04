@@ -1,0 +1,31 @@
+# Dockerfile for dbt
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dbt requirements
+COPY dbt/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy dbt project
+COPY dbt/ /app/dbt/
+
+# Create profiles directory
+RUN mkdir -p /root/.dbt
+
+# Set environment
+ENV ENV=production
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app/dbt
+
+# Run dbt
+CMD ["dbt", "run"]

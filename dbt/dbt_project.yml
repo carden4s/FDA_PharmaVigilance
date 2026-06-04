@@ -1,0 +1,32 @@
+name: 'pharma_vigilance'
+version: '1.0.0'
+config-version: 2
+
+profile: 'pharma_vigilance'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+data-paths: ["data"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  pharma_vigilance:
+    materialized: view
+    bronze:
+      materialized: view
+    silver:
+      materialized: table
+      indexes:
+        - columns: [drug_name, event_date]
+    gold:
+      materialized: table
+      indexes:
+        - columns: [drug_name]
+
+seeds:
+  quote_columns: true

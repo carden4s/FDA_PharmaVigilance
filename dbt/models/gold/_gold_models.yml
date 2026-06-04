@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: fct_adverse_events
+    description: Fact table for adverse events
+    columns:
+      - name: fact_id
+        description: Unique fact identifier
+        tests:
+          - unique
+          - not_null
+      - name: event_id
+        description: Reference to event
+        tests:
+          - not_null
+
+  - name: agg_reaction_frequency
+    description: Top reactions per drug
+    columns:
+      - name: drug_name
+        description: Drug name
+        tests:
+          - not_null
+      - name: reaction_frequency_pct
+        description: Percentage of reactions for drug
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "reaction_frequency_pct >= 0 AND reaction_frequency_pct <= 100"
+
+  - name: agg_drug_safety_profile
+    description: Safety metrics per drug
+    columns:
+      - name: drug_name
+        description: Drug name
+        tests:
+          - unique
+          - not_null
+      - name: serious_rate_pct
+        description: Percentage of serious events
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "serious_rate_pct >= 0 AND serious_rate_pct <= 100"
+
+  - name: agg_patient_demographics
+    description: Patient demographics per drug
+    columns:
+      - name: drug_name
+        description: Drug name
+        tests:
+          - not_null
+
+  - name: agg_polypharmacy_signals
+    description: Multi-drug signals
+    columns:
+      - name: drug_1_name
+        description: First drug name
+        tests:
+          - not_null
+      - name: drug_2_name
+        description: Second drug name
+        tests:
+          - not_null

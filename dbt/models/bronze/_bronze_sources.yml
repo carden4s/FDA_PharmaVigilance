@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: Raw FDA adverse events data
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'PHARMA_DB') }}"
+    schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'BRONZE') }}"
+    tables:
+      - name: raw_fda_adverse_events
+        description: Unprocessed adverse events directly from FDA API
+        columns:
+          - name: safetyreportid
+            description: Unique FDA adverse event report identifier
+            tests:
+              - unique
+              - not_null
+          - name: drug_name
+            description: Name of suspect drug
+          - name: patient_onsetage
+            description: Patient age at symptom onset
+          - name: reaction_name
+            description: Adverse reaction term

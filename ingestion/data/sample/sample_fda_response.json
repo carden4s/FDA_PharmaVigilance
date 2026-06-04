@@ -1,0 +1,81 @@
+"""Sample FDA API response for testing"""
+
+{
+  "meta": {
+    "disclaimer": "Do not rely on openFDA to make decisions regarding medical care",
+    "results": {
+      "skip": 0,
+      "limit": 100,
+      "total": 1245
+    }
+  },
+  "results": [
+    {
+      "safetyreportid": "12345678",
+      "reporttype": "EXP",
+      "serious": 1,
+      "seriousnessdeath": 1,
+      "seriousnesshospitalization": 0,
+      "seriousnesslifethreatening": 1,
+      "seriousnessdisability": 0,
+      "receiver": {
+        "receivertype": "FC"
+      },
+      "sender": {
+        "sendertype": "HP"
+      },
+      "patient": {
+        "patientonsetage": 65,
+        "patientonsetageunit": "YRS",
+        "patientweight": 75,
+        "patientsex": 1,
+        "reaction": [
+          {
+            "reactionmeddrapt": "Myocardial infarction",
+            "reactionmeddrallt": "Acute myocardial infarction",
+            "reactionoutcome": 1
+          },
+          {
+            "reactionmeddrapt": "Chest pain",
+            "reactionoutcome": 3
+          }
+        ]
+      },
+      "drug": [
+        {
+          "medicinalproduct": "ASPIRIN",
+          "drugadministrationroute": "ORAL",
+          "drugseparatedosagenumber": 100,
+          "drugindication": "Pain relief"
+        }
+      ],
+      "eventdate": "20260115",
+      "reportdate": "20260120",
+      "receiptdate": "20260121"
+    },
+    {
+      "safetyreportid": "12345679",
+      "reporttype": "INITIAL",
+      "serious": 0,
+      "patient": {
+        "patientonsetage": 45,
+        "patientsex": 2,
+        "reaction": [
+          {
+            "reactionmeddrapt": "Nausea",
+            "reactionoutcome": 2
+          }
+        ]
+      },
+      "drug": [
+        {
+          "medicinalproduct": "IBUPROFEN",
+          "drugadministrationroute": "ORAL",
+          "drugseparatedosagenumber": 200
+        }
+      ],
+      "eventdate": "20260110",
+      "reportdate": "20260118"
+    }
+  ]
+}

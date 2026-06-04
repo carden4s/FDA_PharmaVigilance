@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # FDA Ingestion Service
+  ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile.ingestion
+    container_name: pharma_ingestion
+    environment:
+      ENV: ${ENV:-development}
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
+      SNOWFLAKE_USER: ${SNOWFLAKE_USER}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+      SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-COMPUTE_WH}
+      SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-PHARMA_DB}
+      SNOWFLAKE_SCHEMA: ${SNOWFLAKE_SCHEMA:-BRONZE}
+      FDA_API_KEY: ${FDA_API_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./ingestion/logs:/app/logs
+      - ./ingestion/data:/app/data
+    networks:
+      - pharma_network
+    restart: on-failure
+    depends_on:
+      - snowflake
+    command: python src/main.py --mode prod
+
+  # dbt Transformation Service
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile.dbt
+    container_name: pharma_dbt
+    environment:
+      ENV: ${ENV:-development}
+      SNOWFLAKE_ACCOUNT: ${SNOWFLAKE_ACCOUNT}
+      SNOWFLAKE_USER: ${SNOWFLAKE_USER}
+      SNOWFLAKE_PASSWORD: ${SNOWFLAKE_PASSWORD}
+      SNOWFLAKE_WAREHOUSE: ${SNOWFLAKE_WAREHOUSE:-COMPUTE_WH}
+      SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-PHARMA_DB}
+      SNOWFLAKE_SCHEMA_DEV: ${SNOWFLAKE_SCHEMA_DEV:-SILVER}
+    volumes:
+      - ./dbt:/app/dbt
+    networks:
+      - pharma_network
+    restart: on-failure
+    depends_on:
+      - ingestion
+    command: dbt run --profiles-dir ~/.dbt
+
+  # Streamlit Dashboard
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    container_name: pharma_dashboard
+    environment:
+      ENV: ${ENV:-development}
+    volumes:
+      - ./streamlit:/app
+      - ~/.streamlit:/root/.streamlit
+    ports:
+      - "8501:8501"
+    networks:
+      - pharma_network
+    restart: on-failure
+    depends_on:
+      - dbt
+
+networks:
+  pharma_network:
+    driver: bridge
+
+volumes:
+  snowflake_data:

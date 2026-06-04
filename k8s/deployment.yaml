@@ -1,0 +1,223 @@
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pharmavigilance
+
+---
+# ConfigMap for shared configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pharma-config
+  namespace: pharmavigilance
+data:
+  ENV: "production"
+  LOG_LEVEL: "INFO"
+  BATCH_SIZE: "1000"
+  SNOWFLAKE_WAREHOUSE: "COMPUTE_WH"
+  SNOWFLAKE_DATABASE: "PHARMA_DB"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pharma-secrets
+  namespace: pharmavigilance
+type: Opaque
+stringData:
+  SNOWFLAKE_ACCOUNT: "XXXXX"
+  SNOWFLAKE_USER: "XXXXX"
+  SNOWFLAKE_PASSWORD: "XXXXX"
+  FDA_API_KEY: "XXXXX"
+
+---
+# Ingestion Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharma-ingestion
+  namespace: pharmavigilance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pharma-ingestion
+  template:
+    metadata:
+      labels:
+        app: pharma-ingestion
+    spec:
+      containers:
+      - name: ingestion
+        image: pharma-ingestion:latest
+        imagePullPolicy: Always
+        env:
+        - name: ENV
+          valueFrom:
+            configMapKeyRef:
+              name: pharma-config
+              key: ENV
+        - name: SNOWFLAKE_ACCOUNT
+          valueFrom:
+            secretKeyRef:
+              name: pharma-secrets
+              key: SNOWFLAKE_ACCOUNT
+        - name: SNOWFLAKE_USER
+          valueFrom:
+            secretKeyRef:
+              name: pharma-secrets
+              key: SNOWFLAKE_USER
+        - name: SNOWFLAKE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pharma-secrets
+              key: SNOWFLAKE_PASSWORD
+        - name: FDA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: pharma-secrets
+              key: FDA_API_KEY
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+      restartPolicy: Always
+
+---
+# dbt CronJob (runs daily at 2 AM UTC)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pharma-dbt
+  namespace: pharmavigilance
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: dbt
+            image: pharma-dbt:latest
+            imagePullPolicy: Always
+            env:
+            - name: ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: pharma-config
+                  key: ENV
+            - name: SNOWFLAKE_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: pharma-secrets
+                  key: SNOWFLAKE_ACCOUNT
+            - name: SNOWFLAKE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: pharma-secrets
+                  key: SNOWFLAKE_USER
+            - name: SNOWFLAKE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pharma-secrets
+                  key: SNOWFLAKE_PASSWORD
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+          restartPolicy: OnFailure
+
+---
+# Streamlit Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: pharma-dashboard-service
+  namespace: pharmavigilance
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8501
+    protocol: TCP
+  selector:
+    app: pharma-dashboard
+
+---
+# Streamlit Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharma-dashboard
+  namespace: pharmavigilance
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pharma-dashboard
+  template:
+    metadata:
+      labels:
+        app: pharma-dashboard
+    spec:
+      containers:
+      - name: streamlit
+        image: pharma-dashboard:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8501
+        env:
+        - name: ENV
+          valueFrom:
+            configMapKeyRef:
+              name: pharma-config
+              key: ENV
+        - name: SNOWFLAKE_ACCOUNT
+          valueFrom:
+            secretKeyRef:
+              name: pharma-secrets
+              key: SNOWFLAKE_ACCOUNT
+        - name: SNOWFLAKE_USER
+          valueFrom:
+            secretKeyRef:
+              name: pharma-secrets
+              key: SNOWFLAKE_USER
+        - name: SNOWFLAKE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pharma-secrets
+              key: SNOWFLAKE_PASSWORD
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 20
+          periodSeconds: 5
