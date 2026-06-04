@@ -1,0 +1,129 @@
+# Credentials and Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.pfx
+secrets/
+credentials/
+config/credentials.yml
+config/secrets.yml
+
+# API Keys and Tokens
+api_keys.txt
+tokens.txt
+.snowflake_credentials
+snowflake_config.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv/
+venv/
+ENV/
+env/
+.venv
+
+# Virtual environments
+.conda/
+conda-env/
+pyenv.cfg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# dbt
+target/
+dbt_packages/
+logs/
+dbt-manifest.json
+
+# Streamlit
+.streamlit/secrets.toml
+.streamlit/*.toml
+.streamlit/cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+temp/
+.temp
+
+# Node modules (if any frontend)
+node_modules/
+npm-debug.log
+
+# Package manager locks (optional - commit if shared)
+# Uncomment if you want to commit lock files
+# poetry.lock
+# Pipfile.lock
+
+# Local development
+local/
+sandbox/
+scratch/
+
+# Data files (raw CSV, parquet, etc.)
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.pkl
+*.pickle
+
+# IDEs specific
+.vscode/settings.json
+.vscode/launch.json
+
+# macOS
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+*.lnk
