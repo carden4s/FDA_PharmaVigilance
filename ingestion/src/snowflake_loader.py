@@ -87,7 +87,8 @@ class SnowflakeLoader:
             received_date VARCHAR,
             loaded_at TIMESTAMP,
             source_drug VARCHAR,
-            ingestion_batch_id VARCHAR
+            ingestion_batch_id VARCHAR,
+            source_date VARCHAR
         )
         """
         try:
