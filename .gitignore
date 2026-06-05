@@ -5,10 +5,14 @@
 *.pem
 *.key
 *.pfx
+*.p12
+*.pkcs8          # key-pair auth keys
 secrets/
 credentials/
 config/credentials.yml
 config/secrets.yml
+secrets.toml
+.streamlit/secrets.toml
 
 # API Keys and Tokens
 api_keys.txt
