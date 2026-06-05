@@ -111,9 +111,9 @@ def main():
     try:
         for drug_config in drugs_to_ingest:
             drug_name = drug_config["name"]
-            logger.info(f"\n{'─' * 60}")
+            logger.info(f"\n{'-' * 60}")
             logger.info(f"Ingesting: {drug_name}")
-            logger.info(f"{'─' * 60}")
+            logger.info(f"{'-' * 60}")
             
             # Fetch data
             fda_response = fda_client.fetch_adverse_events(
@@ -157,14 +157,14 @@ def main():
     
     # Summary
     elapsed_time = time.time() - start_time
-    logger.info(f"\n{'═' * 60}")
+    logger.info(f"\n{'=' * 60}")
     logger.info("INGESTION SUMMARY")
-    logger.info(f"{'═' * 60}")
+    logger.info(f"{'=' * 60}")
     logger.info(f"Total Events: {total_records}")
     logger.info(f"Loaded Records: {total_loaded}")
     logger.info(f"Elapsed Time: {elapsed_time:.1f} seconds")
     logger.info(f"Records/sec: {total_loaded / elapsed_time:.1f}")
-    logger.info(f"{'═' * 60}\n")
+    logger.info(f"{'=' * 60}\n")
     
     return 0 if total_loaded > 0 else 1
 

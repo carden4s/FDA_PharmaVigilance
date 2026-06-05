@@ -105,10 +105,10 @@ class SnowflakeLoader:
         try:
             cursor = self.conn.cursor()
             cursor.execute(sql)
-            logger.info("✓ Bronze table created or already exists")
+            logger.info("[OK] Bronze table created or already exists")
             return True
         except Exception as e:
-            logger.error(f"✗ Failed to create table: {str(e)}")
+            logger.error(f"[ERROR] Failed to create table: {str(e)}")
             return False
     
     def load_batch(self, records: List[Dict[str, Any]], batch_size: int = 1000) -> Dict[str, Any]:

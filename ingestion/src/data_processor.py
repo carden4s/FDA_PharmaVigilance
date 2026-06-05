@@ -57,15 +57,15 @@ class DataProcessor:
         patient_sex = patient.get("patientsex")
         patient_weight = patient.get("patientweight")
         
-        # Get drugs list
-        drugs = event.get("drug", [])
+        # Get drugs list - FDA API stores drugs in patient object
+        drugs = patient.get("drug", [])
         if not isinstance(drugs, list):
-            drugs = [drugs]
+            drugs = [drugs] if drugs else []
         
-        # Get reactions list
+        # Get reactions list - also in patient object
         reactions = patient.get("reaction", [])
         if not isinstance(reactions, list):
-            reactions = [reactions]
+            reactions = [reactions] if reactions else []
         
         # If no reactions, create one row per drug
         if not reactions:

@@ -35,6 +35,7 @@ def setup_logger(name: str = "ingestion") -> logging.Logger:
     
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
+    console_handler.setEncoding('utf-8')
     
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
