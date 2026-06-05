@@ -10,7 +10,8 @@ class Validator:
     VALIDATION_RULES = {
         "safetyreportid": {"required": True, "type": str},
         "patient_onsetage": {"type": int, "range": [0, 150]},
-        "patient_sex": {"allowed": [1, 2, "U", None]},
+        # openFDA: 0 = Unknown, 1 = Male, 2 = Female
+        "patient_sex": {"allowed": [0, 1, 2, "U", None]},
         "drug_name": {"required": False, "type": str},
         "reaction_name": {"required": False, "type": str},
         # openFDA: 1 = serious, 2 = non-serious (there is no 0)
