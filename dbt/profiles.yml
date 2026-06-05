@@ -5,21 +5,23 @@ pharma_vigilance:
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
       user: "{{ env_var('SNOWFLAKE_USER') }}"
       password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
-      database: "{{ env_var('SNOWFLAKE_DATABASE', 'PHARMA_DB') }}"
-      schema: "{{ env_var('SNOWFLAKE_SCHEMA_DEV', 'SILVER') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'FARMACEUTICADATA') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA_DEV', 'FDA_EXPERIENCE') }}"
       threads: 4
       client_session_keep_alive: false
-    
+
     prod:
       type: snowflake
       account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
       user: "{{ env_var('SNOWFLAKE_USER') }}"
       password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
-      database: "{{ env_var('SNOWFLAKE_DATABASE', 'PHARMA_DB') }}"
-      schema: "{{ env_var('SNOWFLAKE_SCHEMA_PROD', 'SILVER') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'FARMACEUTICADATA') }}"
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA_PROD', 'FDA_EXPERIENCE') }}"
       threads: 8
       client_session_keep_alive: false
-  
+
   target: dev
