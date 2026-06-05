@@ -1,7 +1,4 @@
-{{ config(
-    materialized='table',
-    indexes=[{'columns': ['drug_name']}]
-) }}
+{{ config(materialized='table') }}
 
 SELECT
   MD5(CAST(event_id AS VARCHAR)) as fact_id,

@@ -1,7 +1,4 @@
-{{ config(
-    materialized='table',
-    indexes=[{'columns': ['drug_1_name', 'drug_2_name']}]
-) }}
+{{ config(materialized='table') }}
 
 WITH drug_pairs AS (
   SELECT
