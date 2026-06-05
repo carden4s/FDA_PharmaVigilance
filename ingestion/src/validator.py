@@ -13,7 +13,8 @@ class Validator:
         "patient_sex": {"allowed": [1, 2, "U", None]},
         "drug_name": {"required": False, "type": str},
         "reaction_name": {"required": False, "type": str},
-        "serious": {"allowed": [0, 1, None]},
+        # openFDA: 1 = serious, 2 = non-serious (there is no 0)
+        "serious": {"allowed": [1, 2, None]},
     }
 
     @classmethod
@@ -50,7 +51,7 @@ class Validator:
             if value is None:
                 continue
 
-            # Type check (skip remaining checks if type is wrong to avoid comparison errors)
+            # Type check — skip remaining checks if wrong type (avoids comparison crashes)
             expected_type = rules.get("type")
             if expected_type and not isinstance(value, expected_type):
                 errors.append(
@@ -59,7 +60,7 @@ class Validator:
                 )
                 continue
 
-            # Range check (only for numeric values)
+            # Range check (numeric values only)
             if "range" in rules and isinstance(value, (int, float)):
                 min_val, max_val = rules["range"]
                 if not (min_val <= value <= max_val):

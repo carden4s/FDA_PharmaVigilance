@@ -46,7 +46,7 @@ class DataProcessor:
 
     @staticmethod
     def flatten_event(event: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Flatten single FDA event with multiple drugs/reactions."""
+        """Flatten a single FDA event with multiple drugs/reactions."""
         rows = []
         report_id = event.get("safetyreportid")
 

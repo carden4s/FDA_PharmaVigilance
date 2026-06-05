@@ -7,7 +7,7 @@ profile: 'pharma_vigilance'
 model-paths: ["models"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
-data-paths: ["data"]
+seed-paths: ["data"]
 
 target-path: "target"
 clean-targets:
@@ -21,12 +21,8 @@ models:
       materialized: view
     silver:
       materialized: table
-      indexes:
-        - columns: [drug_name, event_date]
     gold:
       materialized: table
-      indexes:
-        - columns: [drug_name]
 
 seeds:
   quote_columns: true

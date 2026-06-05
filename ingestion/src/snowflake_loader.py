@@ -1,7 +1,11 @@
 """Snowflake data loading for FDA adverse events"""
 
 from typing import List, Dict, Any, Optional
+
+import pandas as pd
 import snowflake.connector
+from snowflake.connector.pandas_tools import write_pandas
+
 from logger import logger
 from config import Config
 
@@ -10,19 +14,15 @@ config = Config()
 
 class SnowflakeLoader:
     """Load data to Snowflake"""
-    
+
+    TABLE_NAME = "RAW_FDA_ADVERSE_EVENTS"
+
     def __init__(self):
-        """Initialize Snowflake loader"""
         self.conn = None
         self.config = config
-    
+
     def connect(self) -> Optional[snowflake.connector.SnowflakeConnection]:
-        """
-        Connect to Snowflake
-        
-        Returns:
-            Snowflake connection or None
-        """
+        """Connect to Snowflake."""
         try:
             self.conn = snowflake.connector.connect(
                 account=self.config.SNOWFLAKE_ACCOUNT,
@@ -30,51 +30,40 @@ class SnowflakeLoader:
                 password=self.config.SNOWFLAKE_PASSWORD,
                 warehouse=self.config.SNOWFLAKE_WAREHOUSE,
                 database=self.config.SNOWFLAKE_DATABASE,
+                schema=self.config.SNOWFLAKE_SCHEMA,
                 role=self.config.SNOWFLAKE_ROLE,
             )
-            logger.info("✓ Connected to Snowflake")
+            logger.info("Connected to Snowflake")
             return self.conn
         except Exception as e:
-            logger.error(f"✗ Failed to connect to Snowflake: {str(e)}")
+            logger.error(f"Failed to connect to Snowflake: {str(e)}")
             return None
-    
+
     def test_connection(self) -> bool:
-        """
-        Test Snowflake connection
-        
-        Returns:
-            True if connection successful
-        """
+        """Test Snowflake connection."""
         try:
             conn = self.connect()
             if not conn:
                 return False
-            
             cursor = conn.cursor()
             cursor.execute("SELECT CURRENT_TIMESTAMP()")
             cursor.fetchone()
             cursor.close()
-            
-            logger.info("✓ Snowflake connection test successful")
+            logger.info("Snowflake connection test successful")
             return True
         except Exception as e:
-            logger.error(f"✗ Snowflake connection test failed: {str(e)}")
+            logger.error(f"Snowflake connection test failed: {str(e)}")
             return False
-    
+
     def create_table_if_not_exists(self) -> bool:
-        """
-        Create Bronze layer table if not exists
-        
-        Returns:
-            True if successful
-        """
+        """Create Bronze layer table if not exists."""
         if not self.conn:
             if not self.connect():
                 return False
-        
+
         sql = f"""
-        CREATE TABLE IF NOT EXISTS {self.config.SNOWFLAKE_DATABASE}.{self.config.SNOWFLAKE_SCHEMA}.RAW_FDA_ADVERSE_EVENTS (
-            safetyreportid VARCHAR PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS {self.config.SNOWFLAKE_DATABASE}.{self.config.SNOWFLAKE_SCHEMA}.{self.TABLE_NAME} (
+            safetyreportid VARCHAR,
             report_type VARCHAR,
             serious INT,
             seriousness_death INT,
@@ -101,90 +90,70 @@ class SnowflakeLoader:
             ingestion_batch_id VARCHAR
         )
         """
-        
         try:
             cursor = self.conn.cursor()
             cursor.execute(sql)
-            logger.info("[OK] Bronze table created or already exists")
+            cursor.close()
+            logger.info("Bronze table created or already exists")
             return True
         except Exception as e:
-            logger.error(f"[ERROR] Failed to create table: {str(e)}")
+            logger.error(f"Failed to create table: {str(e)}")
             return False
-    
-    def load_batch(self, records: List[Dict[str, Any]], batch_size: int = 1000) -> Dict[str, Any]:
-        """
-        Load batch of records to Snowflake
-        
-        Args:
-            records: Records to load
-            batch_size: Size of batches
-        
-        Returns:
-            Load summary
-        """
+
+    def truncate_table(self) -> bool:
+        """Truncate the Bronze table (for idempotent full reloads)."""
+        if not self.conn and not self.connect():
+            return False
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                f"TRUNCATE TABLE IF EXISTS "
+                f"{self.config.SNOWFLAKE_DATABASE}.{self.config.SNOWFLAKE_SCHEMA}.{self.TABLE_NAME}"
+            )
+            cursor.close()
+            logger.info("Bronze table truncated")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to truncate table: {str(e)}")
+            return False
+
+    def load_batch(self, records: List[Dict[str, Any]], batch_size: int = 16000) -> Dict[str, Any]:
+        """Bulk-load records to Snowflake using write_pandas."""
         if not self.conn:
             if not self.connect():
                 return {"success": False, "total": 0, "loaded": 0, "failed": 0}
-        
+
         total = len(records)
-        loaded = 0
-        failed = 0
-        
-        logger.info(f"Loading {total} records in batches of {batch_size}")
-        
-        for i in range(0, total, batch_size):
-            batch = records[i:i + batch_size]
-            batch_result = self._load_batch_internal(batch)
-            loaded += batch_result["loaded"]
-            failed += batch_result["failed"]
-            
-            logger.info(f"Batch {i//batch_size + 1}: {batch_result['loaded']} loaded, {batch_result['failed']} failed")
-        
-        return {
-            "success": failed == 0,
-            "total": total,
-            "loaded": loaded,
-            "failed": failed
-        }
-    
-    def _load_batch_internal(self, records: List[Dict[str, Any]]) -> Dict[str, int]:
-        """
-        Load single batch of records
-        
-        Args:
-            records: Records to load
-        
-        Returns:
-            Count of loaded and failed
-        """
+        if total == 0:
+            return {"success": True, "total": 0, "loaded": 0, "failed": 0}
+
+        # Build a DataFrame; uppercase columns to match unquoted Snowflake identifiers
+        df = pd.DataFrame(records)
+        df.columns = [c.upper() for c in df.columns]
+
+        logger.info(f"Loading {total} records via write_pandas (chunks of {batch_size})")
+
         try:
-            cursor = self.conn.cursor()
-            
-            # Insert records
-            for record in records:
-                columns = ", ".join(record.keys())
-                placeholders = ", ".join(["%s"] * len(record))
-                values = tuple(record.values())
-                
-                sql = f"""
-                INSERT INTO {self.config.SNOWFLAKE_DATABASE}.{self.config.SNOWFLAKE_SCHEMA}.RAW_FDA_ADVERSE_EVENTS
-                ({columns}) VALUES ({placeholders})
-                """
-                
-                try:
-                    cursor.execute(sql, values)
-                except Exception as e:
-                    logger.warning(f"Failed to insert record {record.get('safetyreportid')}: {str(e)}")
-            
-            cursor.close()
-            return {"loaded": len(records), "failed": 0}
-        
+            success, n_chunks, n_rows, _ = write_pandas(
+                conn=self.conn,
+                df=df,
+                table_name=self.TABLE_NAME,
+                database=self.config.SNOWFLAKE_DATABASE,
+                schema=self.config.SNOWFLAKE_SCHEMA,
+                chunk_size=batch_size,
+                quote_identifiers=False,
+            )
+            loaded = int(n_rows)
+            failed = total - loaded
+            logger.info(f"write_pandas: success={success}, chunks={n_chunks}, rows={loaded}")
+            return {"success": bool(success) and failed == 0,
+                    "total": total, "loaded": loaded, "failed": failed}
         except Exception as e:
-            logger.error(f"Batch load failed: {str(e)}")
-            return {"loaded": 0, "failed": len(records)}
-    
+            logger.error(f"Bulk load failed: {str(e)}")
+            return {"success": False, "total": total, "loaded": 0, "failed": total}
+
     def close(self):
-        """Close Snowflake connection"""
+        """Close Snowflake connection."""
         if self.conn:
             self.conn.close()
             logger.info("Snowflake connection closed")

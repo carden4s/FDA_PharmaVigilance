@@ -19,7 +19,7 @@ def setup_logger(name: str = "ingestion") -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, config.LOG_LEVEL))
 
-    # Avoid adding duplicate handlers on repeated imports
+    # Avoid duplicate handlers when imported multiple times
     if logger.handlers:
         return logger
 
@@ -33,9 +33,8 @@ def setup_logger(name: str = "ingestion") -> logging.Logger:
     try:
         console_handler.stream.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):
-        pass  # older streams; safe to ignore
+        pass  # older stream types; safe to ignore
 
-    # Formatter
     formatter = logging.Formatter(
         "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
