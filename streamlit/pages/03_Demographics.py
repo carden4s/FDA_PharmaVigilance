@@ -3,8 +3,10 @@ import pandas as pd
 from data.snowflake_client import SnowflakeClient
 from components.sidebar import render_sidebar
 from components.charts import create_bar_chart, create_pie_chart
+from components.theme import apply_theme
 
 st.set_page_config(page_title="Demographics", page_icon="👥", layout="wide")
+apply_theme()
 render_sidebar()
 
 st.title("👥 Patient Demographics")
