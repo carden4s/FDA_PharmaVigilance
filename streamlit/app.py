@@ -1,116 +1,69 @@
 import streamlit as st
 import pandas as pd
+
 from data.snowflake_client import SnowflakeClient
 from components.sidebar import render_sidebar
+from components.theme import apply_theme, hero
 from components.charts import create_bar_chart, create_pie_chart
 
-# Page configuration
-st.set_page_config(
-    page_title="FDA PharmaVigilance",
-    page_icon="💊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Sidebar
+st.set_page_config(page_title="FarmacoVigilancia FDA", page_icon="💊",
+                   layout="wide", initial_sidebar_state="expanded")
+apply_theme()
 render_sidebar()
 
-# Title
-st.title("🏥 FDA PharmaVigilance Dashboard")
-st.markdown("Real-time adverse event monitoring and pharmaceutical safety analysis")
+hero("🏥 Panel de FarmacoVigilancia FDA",
+     "Monitoreo de eventos adversos y análisis de seguridad farmacéutica · openFDA")
 
-# Initialize Snowflake client
 client = SnowflakeClient()
-
-# Get drugs for selector
 drugs = client.get_drugs()
-
 if not drugs:
-    st.error("No data available. Please ensure Snowflake is configured correctly.")
+    st.error("No hay datos disponibles. Verifique la conexión a Snowflake y que existan las tablas gold en FARMACEUTICADATA.FDA_EXPERIENCE.")
     st.stop()
 
-# Select drug
-selected_drug = st.selectbox("Select Drug", drugs, key="drug_selector")
-
-# Get drug profile
+selected_drug = st.selectbox("Seleccionar medicamento", drugs)
 profile = client.get_drug_profile(selected_drug)
+if not profile:
+    st.warning(f"No se encontraron datos para {selected_drug}")
+    st.stop()
 
-if profile:
-    # Key metrics
-    st.subheader("Key Metrics")
-    col1, col2, col3, col4 = st.columns(4)
-    
-    col1.metric(
-        "Total Events",
-        f"{profile['TOTAL_EVENTS']:,}",
-        help="Total adverse events reported"
-    )
-    col2.metric(
-        "Serious Rate",
-        f"{profile['SERIOUS_RATE_PCT']:.1f}%",
-        help="Percentage of serious adverse events"
-    )
-    col3.metric(
-        "Fatal Rate",
-        f"{profile['FATAL_RATE_PCT']:.1f}%",
-        help="Percentage of fatal adverse events"
-    )
-    col4.metric(
-        "Approx. Patients",
-        f"{profile['APPROX_UNIQUE_PATIENTS']:,}",
-        help="Approximate unique patients affected"
-    )
-    
-    st.markdown("---")
-    
-    # Top reactions
-    st.subheader("Top 10 Reactions")
-    reactions_df = client.get_top_reactions(selected_drug, 10)
-    
-    if reactions_df is not None and len(reactions_df) > 0:
-        # Bar chart
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            fig = create_bar_chart(
-                reactions_df,
-                x="REACTION_NAME",
-                y="REACTION_COUNT",
-                title="Reaction Frequency",
-                labels={"REACTION_NAME": "Reaction", "REACTION_COUNT": "Count"}
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Serious vs Non-Serious
-        with col2:
-            pie_data = pd.DataFrame({
-                "Type": ["Serious", "Non-Serious"],
-                "Count": [
-                    reactions_df["SERIOUS_REACTION_COUNT"].sum(),
-                    reactions_df["REACTION_COUNT"].sum() - reactions_df["SERIOUS_REACTION_COUNT"].sum()
-                ]
-            })
-            fig = create_pie_chart(
-                pie_data,
-                values="Count",
-                names="Type",
-                title="Serious vs Non-Serious"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        # Reactions table
-        st.subheader("Reactions Detail")
-        st.dataframe(reactions_df, use_container_width=True)
-    
-    # Demographics
-    st.markdown("---")
-    st.subheader("Patient Demographics")
-    
-    demographics_df = client.get_demographics(selected_drug)
-    if demographics_df is not None and len(demographics_df) > 0:
-        st.dataframe(demographics_df, use_container_width=True)
-else:
-    st.warning(f"No data found for {selected_drug}")
+st.subheader(f"📊 {selected_drug} — Resumen de seguridad")
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Eventos totales", f"{profile['TOTAL_EVENTS']:,}")
+c2.metric("Tasa de gravedad", f"{profile['SERIOUS_RATE_PCT']:.1f}%")
+c3.metric("Tasa de mortalidad", f"{profile['FATAL_RATE_PCT']:.1f}%")
+c4.metric("Pacientes aprox.", f"{profile['APPROX_UNIQUE_PATIENTS']:,}")
 
-st.markdown("---")
-st.markdown("*Dashboard auto-refreshes every 5 minutes. Last update tracked by dbt.*")
+st.divider()
+tab_react, tab_demo = st.tabs(["🧬 Reacciones", "👥 Demografía"])
+
+with tab_react:
+    rdf = client.get_top_reactions(selected_drug, 10)
+    if rdf is not None and len(rdf) > 0:
+        left, right = st.columns([2, 1])
+        with left:
+            st.plotly_chart(
+                create_bar_chart(rdf.sort_values("REACTION_COUNT"),
+                                 x="REACTION_COUNT", y="REACTION_NAME",
+                                 title="10 reacciones principales"),
+                use_container_width=True)
+        with right:
+            serious = int(rdf["SERIOUS_REACTION_COUNT"].sum())
+            non = int(rdf["REACTION_COUNT"].sum()) - serious
+            pie = pd.DataFrame({"Tipo": ["Graves", "No graves"], "Cantidad": [serious, non]})
+            st.plotly_chart(create_pie_chart(pie, values="Cantidad", names="Tipo",
+                                             title="Graves vs No graves"),
+                            use_container_width=True)
+        st.markdown("##### Detalle de reacciones")
+        st.dataframe(rdf, use_container_width=True, hide_index=True)
+    else:
+        st.info("No hay datos de reacciones para este medicamento.")
+
+with tab_demo:
+    ddf = client.get_demographics(selected_drug)
+    if ddf is not None and len(ddf) > 0:
+        st.dataframe(ddf, use_container_width=True, hide_index=True)
+    else:
+        st.info("No hay datos demográficos para este medicamento.")
+
+st.divider()
+st.caption("Datos: openFDA · Bronze → Silver (deduplicado, 3 años) → Gold · actualizado por dbt")

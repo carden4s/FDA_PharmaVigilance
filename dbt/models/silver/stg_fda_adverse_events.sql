@@ -5,7 +5,11 @@
 ) }}
 
 SELECT
-  MD5(CONCAT(CAST(safetyreportid AS VARCHAR), CAST(drug_name AS VARCHAR), CAST(reaction_name AS VARCHAR))) as event_id,
+  MD5(CONCAT_WS('||',
+    CAST(safetyreportid AS VARCHAR),
+    CAST(drug_name AS VARCHAR),
+    COALESCE(CAST(reaction_name AS VARCHAR), 'NO_REACTION')
+  )) as event_id,
   safetyreportid as report_id,
   report_type,
 
@@ -19,6 +23,7 @@ SELECT
   -- Patient demographics
   NULLIF(TRY_TO_NUMBER(patient_onsetage), 0) as patient_age,
   CASE
+    WHEN patient_onsetage IS NULL THEN 'Unknown'
     WHEN patient_onsetage < 18 THEN '0-18'
     WHEN patient_onsetage < 40 THEN '19-40'
     WHEN patient_onsetage < 60 THEN '41-60'
@@ -67,11 +72,9 @@ FROM {{ source('bronze', 'raw_fda_adverse_events') }}
 
 WHERE safetyreportid IS NOT NULL
   AND drug_name IS NOT NULL
-  -- Rolling 3-year retention anchored on receivedate
   AND TRY_TO_DATE(received_date, 'YYYYMMDD') >= DATEADD(year, -3, CURRENT_DATE)
 
 {% if is_incremental() %}
-  -- Only process Bronze rows newer than what we've already pulled
   AND loaded_at > (SELECT COALESCE(MAX(loaded_at), '1900-01-01'::timestamp) FROM {{ this }})
 {% endif %}
 

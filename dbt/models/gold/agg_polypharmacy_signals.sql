@@ -5,7 +5,7 @@ WITH drug_pairs AS (
     LEAST(a.drug_name, b.drug_name) as drug_1_name,
     GREATEST(a.drug_name, b.drug_name) as drug_2_name,
     a.report_id,
-    a.is_serious,
+    a.serious as is_serious,
     a.is_fatal,
     a.reaction_name
   

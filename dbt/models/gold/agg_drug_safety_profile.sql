@@ -3,8 +3,8 @@
 SELECT
   drug_name,
   COUNT(*) as total_events,
-  SUM(CASE WHEN is_serious = 1 THEN 1 ELSE 0 END) as serious_events,
-  ROUND(100.0 * SUM(CASE WHEN is_serious = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) as serious_rate_pct,
+  SUM(CASE WHEN serious = 1 THEN 1 ELSE 0 END) as serious_events,
+  ROUND(100.0 * SUM(CASE WHEN serious = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) as serious_rate_pct,
   SUM(CASE WHEN is_fatal = 1 THEN 1 ELSE 0 END) as fatal_events,
   ROUND(100.0 * SUM(CASE WHEN is_fatal = 1 THEN 1 ELSE 0 END) / COUNT(*), 2) as fatal_rate_pct,
   SUM(CASE WHEN is_hospitalized = 1 THEN 1 ELSE 0 END) as hospitalized_events,
