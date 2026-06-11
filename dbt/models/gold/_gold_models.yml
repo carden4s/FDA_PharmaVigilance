@@ -16,36 +16,29 @@ models:
 
   - name: agg_reaction_frequency
     description: Top reactions per drug
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "reaction_frequency_pct >= 0 AND reaction_frequency_pct <= 100"
     columns:
       - name: drug_name
-        description: Drug name
         tests:
           - not_null
-      - name: reaction_frequency_pct
-        description: Percentage of reactions for drug
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "reaction_frequency_pct >= 0 AND reaction_frequency_pct <= 100"
 
   - name: agg_drug_safety_profile
     description: Safety metrics per drug
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "serious_rate_pct >= 0 AND serious_rate_pct <= 100"
     columns:
       - name: drug_name
-        description: Drug name
         tests:
           - unique
           - not_null
-      - name: serious_rate_pct
-        description: Percentage of serious events
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "serious_rate_pct >= 0 AND serious_rate_pct <= 100"
 
   - name: agg_patient_demographics
     description: Patient demographics per drug
     columns:
       - name: drug_name
-        description: Drug name
         tests:
           - not_null
 
@@ -53,10 +46,23 @@ models:
     description: Multi-drug signals
     columns:
       - name: drug_1_name
-        description: First drug name
         tests:
           - not_null
       - name: drug_2_name
-        description: Second drug name
+        tests:
+          - not_null
+
+  - name: agg_disproportionality
+    description: PRR/ROR disproportionality signals per drug-reaction pair
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "prr >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "ror >= 0"
+    columns:
+      - name: drug_name
+        tests:
+          - not_null
+      - name: reaction_name
         tests:
           - not_null
