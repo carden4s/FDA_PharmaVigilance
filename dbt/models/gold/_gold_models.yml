@@ -66,3 +66,7 @@ models:
       - name: reaction_name
         tests:
           - not_null
+      - name: chi_square
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "chi_square >= 0"

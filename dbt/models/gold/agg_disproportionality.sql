@@ -46,8 +46,15 @@ SELECT
         ((ac.a + 0.5) * ((t.n - dt.n_drug - (rt.n_reaction - ac.a)) + 0.5)) /
         (((dt.n_drug - ac.a) + 0.5) * ((rt.n_reaction - ac.a) + 0.5))
     , 3) AS ror,
+    -- Chi-squared (Yates not applied); high values = stronger evidence
+    ROUND(
+        (t.n * POWER((ac.a * (t.n - dt.n_drug - (rt.n_reaction - ac.a))) - ((dt.n_drug - ac.a) * (rt.n_reaction - ac.a)), 2))
+        / (dt.n_drug * (t.n - dt.n_drug) * rt.n_reaction * (t.n - rt.n_reaction))
+    , 2) AS chi_squared,
     CURRENT_TIMESTAMP() AS updated_at
 FROM a_counts ac
 JOIN drug_tot dt     ON ac.drug_name = dt.drug_name
 JOIN reaction_tot rt ON ac.reaction_name = rt.reaction_name
 CROSS JOIN n_total t
+WHERE dt.n_drug >= 50          -- only assess drugs with a real report base (drops 5-report curiosities)
+  AND rt.n_reaction >= 5       -- drop one-off reactions

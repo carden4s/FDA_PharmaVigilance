@@ -21,7 +21,7 @@ def test_initialization(fda_client):
     assert fda_client.max_retries == 5
 
 
-@patch('fda_client.requests.get')
+@patch('fda_client.requests.Session.get')
 def test_test_connection_success(mock_get, fda_client):
     mock_response = Mock()
     mock_response.json.return_value = {"results": []}
@@ -46,7 +46,7 @@ def test_build_search_with_window(fda_client):
     assert "receivedate:[20240101 TO 20240131]" in s
 
 
-@patch('fda_client.requests.get')
+@patch('fda_client.requests.Session.get')
 def test_fetch_adverse_events(mock_get, fda_client):
     mock_response = Mock()
     mock_response.status_code = 200
@@ -59,7 +59,7 @@ def test_fetch_adverse_events(mock_get, fda_client):
     assert len(result["results"]) == 1
 
 
-@patch('fda_client.requests.get')
+@patch('fda_client.requests.Session.get')
 def test_fetch_paginates(mock_get, fda_client):
     """Should page through multiple responses until the last short page."""
     fda_client.PAGE_SIZE = 2
@@ -75,7 +75,7 @@ def test_fetch_paginates(mock_get, fda_client):
     assert len(result["results"]) == 3
 
 
-@patch('fda_client.requests.get')
+@patch('fda_client.requests.Session.get')
 def test_fetch_404_returns_empty(mock_get, fda_client):
     """openFDA returns 404 for zero matches -> treat as empty, not error."""
     resp = Mock(); resp.status_code = 404

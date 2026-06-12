@@ -90,24 +90,17 @@ class SnowflakeClient:
         return self.query(sql, [drug_name, limit])
     
     def get_disproportionality(self, drug_name: str = None, limit: int = 100):
-        """Get PRR/ROR disproportionality signals (optionally filtered by drug)."""
-        if drug_name:
-            sql = """
-            SELECT drug_name, reaction_name, reports_with_both,
-                   n_drug, n_reaction, prr, ror
-            FROM agg_disproportionality
-            WHERE drug_name = %s
-            ORDER BY prr DESC NULLS LAST
-            LIMIT %s
-            """
-            return self.query(sql, [drug_name, limit])
-        sql = """
+        """PRR/ROR signals filtered to statistically meaningful ones, ranked by evidence."""
+        base = """
         SELECT drug_name, reaction_name, reports_with_both,
-               n_drug, n_reaction, prr, ror
+               n_drug, n_reaction, prr, ror, chi_squared
         FROM agg_disproportionality
-        ORDER BY prr DESC NULLS LAST
-        LIMIT %s
+        WHERE prr >= 2 AND chi_squared >= 4 AND reports_with_both >= 3
         """
+        if drug_name:
+            sql = base + " AND drug_name = %s ORDER BY reports_with_both DESC, prr DESC LIMIT %s"
+            return self.query(sql, [drug_name, limit])
+        sql = base + " ORDER BY reports_with_both DESC, prr DESC LIMIT %s"
         return self.query(sql, [limit])
     
     def get_demographics(self, drug_name: str) -> Optional[pd.DataFrame]:
