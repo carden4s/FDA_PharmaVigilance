@@ -34,7 +34,7 @@ c3.metric("Tasa de mortalidad", f"{profile['FATAL_RATE_PCT']:.1f}%")
 c4.metric("Pacientes aprox.", f"{profile['APPROX_UNIQUE_PATIENTS']:,}")
 
 st.divider()
-tab_react, tab_demo = st.tabs(["🧬 Reacciones", "👥 Demografía"])
+tab_react, tab_demo, tab_poly = st.tabs(["🧬 Reacciones", "👥 Demografía", "⚗️ Polifarmacia"])
 
 with tab_react:
     rdf = client.get_top_reactions(selected_drug, 10)
@@ -64,6 +64,34 @@ with tab_demo:
         st.dataframe(ddf, use_container_width=True, hide_index=True)
     else:
         st.info("No hay datos demográficos para este medicamento.")
+
+with tab_poly:
+    st.caption("Combinaciones de medicamentos reportadas junto a otros fármacos (señales de interacción).")
+    pdf = client.get_polypharmacy_signals(limit=200)
+    if pdf is not None and len(pdf) > 0:
+        # combinations involving the selected drug
+        mask = (pdf["DRUG_1_NAME"] == selected_drug) | (pdf["DRUG_2_NAME"] == selected_drug)
+        sub = pdf[mask].copy()
+        if len(sub) == 0:
+            st.info(f"No hay combinaciones registradas para {selected_drug}. Mostrando las principales globales.")
+            sub = pdf.copy()
+        sub["PAR"] = sub["DRUG_1_NAME"] + " + " + sub["DRUG_2_NAME"]
+        top = sub.sort_values("CO_OCCURRENCE_COUNT", ascending=False).head(12)
+        st.plotly_chart(
+            create_bar_chart(top.sort_values("CO_OCCURRENCE_COUNT"),
+                             x="CO_OCCURRENCE_COUNT", y="PAR",
+                             title="Principales combinaciones por coocurrencia"),
+            use_container_width=True)
+        st.markdown("##### Detalle de combinaciones")
+        st.dataframe(
+            sub[["DRUG_1_NAME", "DRUG_2_NAME", "CO_OCCURRENCE_COUNT", "COMBINED_SERIOUS_RATE_PCT"]]
+               .rename(columns={
+                   "DRUG_1_NAME": "Medicamento 1", "DRUG_2_NAME": "Medicamento 2",
+                   "CO_OCCURRENCE_COUNT": "Coocurrencias", "COMBINED_SERIOUS_RATE_PCT": "Tasa gravedad (%)"})
+               .sort_values("Coocurrencias", ascending=False),
+            use_container_width=True, hide_index=True)
+    else:
+        st.info("No hay datos de polifarmacia disponibles.")
 
 st.divider()
 st.caption("Datos: openFDA · Bronze → Silver (deduplicado, 3 años) → Gold · actualizado por dbt")
