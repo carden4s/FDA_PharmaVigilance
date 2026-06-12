@@ -36,8 +36,17 @@ class Config:
     
     # Monitored Drugs
     MONITORED_DRUGS = [
-        {"name": "Aspirin", "fda_id": "ASPIRIN", "priority": "high"},
-        {"name": "Ibuprofen", "fda_id": "IBUPROFEN", "priority": "high"},
+        {"name": name, "fda_id": name.upper(), "priority": "normal"}
+        for name in [
+            "Aspirin", "Ibuprofen", "Acetaminophen", "Naproxen", "Metformin",
+            "Atorvastatin", "Simvastatin", "Rosuvastatin", "Lisinopril", "Losartan",
+            "Amlodipine", "Metoprolol", "Hydrochlorothiazide", "Furosemide", "Warfarin",
+            "Clopidogrel", "Omeprazole", "Pantoprazole", "Gabapentin", "Pregabalin",
+            "Sertraline", "Fluoxetine", "Citalopram", "Escitalopram", "Duloxetine",
+            "Prednisone", "Levothyroxine", "Albuterol", "Insulin", "Tramadol",
+            "Amoxicillin", "Azithromycin", "Ciprofloxacin", "Methotrexate", "Adalimumab",
+            "Etanercept", "Rituximab", "Tocilizumab", "Apixaban", "Rivaroxaban",
+        ]
     ]
     
     @classmethod
