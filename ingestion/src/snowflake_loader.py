@@ -71,6 +71,7 @@ class SnowflakeLoader:
             seriousness_lifethreatening INT,
             seriousness_disability INT,
             patient_onsetage INT,
+            patient_onsetage_unit INT,
             patient_sex INT,
             patient_weight DECIMAL(10, 2),
             drug_name VARCHAR,

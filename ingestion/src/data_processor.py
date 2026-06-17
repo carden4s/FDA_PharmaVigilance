@@ -56,6 +56,7 @@ class DataProcessor:
         # Patient data (same for all drugs/reactions in this event)
         patient = event.get("patient", {}) or {}
         patient_age = patient.get("patientonsetage")
+        patient_age_unit = patient.get("patientonsetageunit")
         patient_sex = patient.get("patientsex")
         patient_weight = patient.get("patientweight")
 
@@ -92,6 +93,7 @@ class DataProcessor:
 
                     # Patient data
                     "patient_onsetage": _to_int(patient_age),
+                    "patient_onsetage_unit": _to_int(patient_age_unit),
                     "patient_sex": _to_int(patient_sex),
                     "patient_weight": _to_float(patient_weight),
 
