@@ -62,6 +62,8 @@ models:
           expression: "prr >= 0"
       - dbt_utils.expression_is_true:
           expression: "ror >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "chi_squared >= 0"
     columns:
       - name: drug_name
         tests:
@@ -69,7 +71,5 @@ models:
       - name: reaction_name
         tests:
           - not_null
-      - name: chi_square
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "chi_square >= 0"
+      - name: chi_squared
+        description: Chi-squared statistic for the drug-reaction signal

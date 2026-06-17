@@ -114,8 +114,9 @@ cleaned AS (
 
 SELECT
   cleaned.* EXCLUDE (drug_name_clean),
-  -- canonical name: seed override (brand->generic) else the regex-cleaned name
-  COALESCE(syn.canonical_name, cleaned.drug_name_clean) as drug_name
+  -- canonical name: seed override (brand->generic), else cleaned name,
+  -- else raw name when cleaning stripped everything (e.g. "ER", "ORAL", "SR")
+  COALESCE(syn.canonical_name, NULLIF(cleaned.drug_name_clean, ''), cleaned.drug_name_raw) as drug_name
 FROM cleaned
 LEFT JOIN {{ ref('drug_synonyms') }} syn
   ON cleaned.drug_name_clean = syn.drug_name_variant
