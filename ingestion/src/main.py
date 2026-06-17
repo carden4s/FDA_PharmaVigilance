@@ -39,7 +39,7 @@ def resolve_window(args):
         start_dt = end_dt - timedelta(days=args.days_back)
         return start_dt.strftime("%Y%m%d"), end_dt.strftime("%Y%m%d"), end_dt.strftime("%Y%m%d")
     if args.start_date and args.end_date:
-        return args.start_date, args.end_date, args.end_date
+     return args.start_date, args.end_date, args.end_date
     return None, None, datetime.now(timezone.utc).strftime("%Y%m%d")
 
 

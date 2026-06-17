@@ -13,6 +13,9 @@ models:
         description: Reference to event
         tests:
           - not_null
+          - relationships:
+              to: ref('stg_fda_adverse_events')
+              field: event_id
 
   - name: agg_reaction_frequency
     description: Top reactions per drug
@@ -59,6 +62,8 @@ models:
           expression: "prr >= 0"
       - dbt_utils.expression_is_true:
           expression: "ror >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "chi_squared >= 0"
     columns:
       - name: drug_name
         tests:
@@ -66,7 +71,5 @@ models:
       - name: reaction_name
         tests:
           - not_null
-      - name: chi_square
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "chi_square >= 0"
+      - name: chi_squared
+        description: Chi-squared statistic for the drug-reaction signal

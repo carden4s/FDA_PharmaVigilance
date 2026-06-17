@@ -2,13 +2,13 @@ version: 2
 
 models:
   - name: stg_fda_adverse_events
-    description: Cleaned and standardized FDA adverse events
+    description: Cleaned and standardized FDA adverse events (one row per report x drug x reaction)
     tests:
       - dbt_utils.expression_is_true:
           expression: "patient_age IS NULL OR (patient_age >= 0 AND patient_age <= 150)"
     columns:
       - name: event_id
-        description: Unique event identifier (MD5 hash of report + drug + reaction)
+        description: Unique event identifier (MD5 hash of report + raw drug + reaction)
         tests:
           - unique
           - not_null
@@ -17,23 +17,35 @@ models:
         tests:
           - not_null
       - name: drug_name
-        description: Drug name (standardized, uppercase)
+        description: Canonical drug name (regex-normalized, then brand->generic via drug_synonyms seed)
+        tests:
+          - not_null
+      - name: drug_name_raw
+        description: Upper/trimmed original medicinalproduct value, kept for traceability
         tests:
           - not_null
       - name: reaction_name
-        description: Adverse reaction name
+        description: Adverse reaction name (upper/trimmed MedDRA PT)
       - name: patient_age
-        description: Patient age in years (0-150)
+        description: Patient age in years (openFDA age units 800-805 converted to years)
+      - name: patient_age_group
+        description: Age bucket (0-18, 19-40, 41-60, 60+, Unknown)
+        tests:
+          - accepted_values:
+              values: ['0-18', '19-40', '41-60', '60+', 'Unknown']
       - name: patient_sex
         description: Patient sex (Male, Female, Unknown)
         tests:
           - accepted_values:
               values: ['Male', 'Female', 'Unknown']
       - name: is_fatal
-        description: Whether death was reported
+        description: Whether death was reported (1/0)
       - name: is_serious
-        description: Whether event was serious
+        description: Whether event was serious (1/0)
       - name: event_date
         description: Date adverse event occurred
       - name: reaction_outcome
-        description: Outcome of reaction (Fatal, Serious, Hospitalized, etc.)
+        description: Outcome of reaction
+        tests:
+          - accepted_values:
+              values: ['Fatal', 'Serious', 'Hospitalized', 'Disability', 'Congenital Anomaly', 'Other']

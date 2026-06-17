@@ -43,6 +43,7 @@ def nested_drug_event():
         "serious": "2",                       # string, like the live API
         "patient": {
             "patientonsetage": "45",          # string age
+            "patientonsetageunit": "801",      # 801 = year
             "patientsex": "0",                # 0 = Unknown
             "drug": [{"medicinalproduct": "ASPIRIN"}],
             "reaction": [{"reactionmeddrapt": "Nausea", "reactionoutcome": "2"}]
@@ -80,6 +81,17 @@ def test_flatten_type_coercion(nested_drug_event):
     assert row["patient_sex"] == 0
     assert row["reaction_outcome"] == 2
 
+
+def test_flatten_captures_age_unit(nested_drug_event):
+    """openFDA patientonsetageunit must be captured and coerced to int."""
+    row = DataProcessor.flatten_event(nested_drug_event)[0]
+    assert row["patient_onsetage_unit"] == 801
+
+
+def test_flatten_age_unit_absent_is_none(sample_event):
+    """Events without an age unit (sample/legacy) yield None, not an error."""
+    row = DataProcessor.flatten_event(sample_event)[0]
+    assert row["patient_onsetage_unit"] is None
 
 def test_flatten_response_empty():
     assert DataProcessor.flatten_response({}) == []

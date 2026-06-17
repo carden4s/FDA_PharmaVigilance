@@ -8,6 +8,10 @@ sources:
     tables:
       - name: raw_fda_adverse_events
         description: Unprocessed adverse events directly from FDA API
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 2, period: day}
+          error_after: {count: 7, period: day}
         columns:
           - name: safetyreportid
             description: Unique FDA adverse event report identifier
@@ -16,6 +20,8 @@ sources:
           - name: drug_name
             description: Name of suspect drug
           - name: patient_onsetage
-            description: Patient age at symptom onset
+            description: Patient age at symptom onset (value; unit in patient_onsetage_unit)
+          - name: patient_onsetage_unit
+            description: openFDA age unit code (800=decade, 801=year, 802=month, 803=week, 804=day, 805=hour)
           - name: reaction_name
             description: Adverse reaction term
