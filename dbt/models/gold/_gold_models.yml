@@ -13,6 +13,9 @@ models:
         description: Reference to event
         tests:
           - not_null
+          - relationships:
+              to: ref('stg_fda_adverse_events')
+              field: event_id
 
   - name: agg_reaction_frequency
     description: Top reactions per drug

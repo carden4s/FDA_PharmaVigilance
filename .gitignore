@@ -131,3 +131,6 @@ data/processed/
 
 # Windows
 *.lnk
+
+# dbt seeds are source-controlled data, not generated output
+!dbt/data/*.csv
