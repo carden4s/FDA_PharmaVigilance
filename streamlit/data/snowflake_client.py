@@ -1,4 +1,6 @@
-"""Snowflake client for Streamlit dashboard"""
+# Snowflake client for Streamlit dashboard
+# Co-authored with CoCo
+"""Snowflake data access layer for the dashboard."""
 
 import streamlit as st
 from snowflake.connector import connect
@@ -20,22 +22,20 @@ def get_connection():
         )
         return conn
     except Exception as e:
-        st.error(f"Failed to connect to Snowflake: {str(e)}")
+        st.error(f"Error al conectar con Snowflake: {str(e)}")
         return None
 
 
 class SnowflakeClient:
     """Snowflake data access layer"""
-    
+
     def __init__(self):
         self.conn = get_connection()
-    
+
     def query(self, sql: str, params: List[Any] = None) -> Optional[pd.DataFrame]:
-        """Execute SQL query and return DataFrame"""
         if not self.conn:
-            st.error("No database connection")
+            st.error("Sin conexión a la base de datos")
             return None
-        
         try:
             cursor = self.conn.cursor()
             cursor.execute(sql, params or [])
@@ -43,40 +43,35 @@ class SnowflakeClient:
             cursor.close()
             return df
         except Exception as e:
-            st.error(f"Query failed: {str(e)}")
+            st.error(f"La consulta falló: {str(e)}")
             return None
-    
+
     def get_drugs(self) -> List[str]:
-        """Get list of all drugs"""
         df = self.query("SELECT DISTINCT drug_name FROM agg_drug_safety_profile ORDER BY drug_name")
         return df["DRUG_NAME"].tolist() if df is not None else []
-    
+
     def get_drug_profile(self, drug_name: str) -> Optional[Dict]:
-        """Get safety profile for a drug"""
+        """Get report-level safety profile for a drug"""
         sql = """
-        SELECT 
+        SELECT
             drug_name,
-            total_events,
-            serious_events,
+            total_reports,
+            serious_reports,
             serious_rate_pct,
-            fatal_events,
+            fatal_reports,
             fatal_rate_pct,
-            hospitalized_events,
+            hospitalized_reports,
             hospitalization_rate_pct,
-            approx_unique_patients,
-            date_first_event,
-            date_last_event,
-            event_date_range_days
+            avg_patient_age
         FROM agg_drug_safety_profile
         WHERE drug_name = %s
         """
         df = self.query(sql, [drug_name])
         return df.to_dict("records")[0] if df is not None and len(df) > 0 else None
-    
+
     def get_top_reactions(self, drug_name: str, limit: int = 10) -> Optional[pd.DataFrame]:
-        """Get top reactions for a drug"""
         sql = """
-        SELECT 
+        SELECT
             reaction_name,
             reaction_count,
             reaction_frequency_pct,
@@ -88,25 +83,24 @@ class SnowflakeClient:
         LIMIT %s
         """
         return self.query(sql, [drug_name, limit])
-    
+
     def get_disproportionality(self, drug_name: str = None, limit: int = 100):
-        """PRR/ROR signals filtered to statistically meaningful ones, ranked by evidence."""
+        """PRR/ROR signals already flagged is_signal, ranked by the 95% CI lower bound."""
         base = """
         SELECT drug_name, reaction_name, reports_with_both,
-               n_drug, n_reaction, prr, ror, chi_squared
+               n_drug, n_reaction, prr, ror, ror_lower_95, chi_squared, is_signal
         FROM agg_disproportionality
-        WHERE prr >= 2 AND chi_squared >= 4 AND reports_with_both >= 3
+        WHERE is_signal = TRUE
         """
         if drug_name:
-            sql = base + " AND drug_name = %s ORDER BY reports_with_both DESC, prr DESC LIMIT %s"
+            sql = base + " AND drug_name = %s ORDER BY ror_lower_95 DESC LIMIT %s"
             return self.query(sql, [drug_name, limit])
-        sql = base + " ORDER BY reports_with_both DESC, prr DESC LIMIT %s"
+        sql = base + " ORDER BY ror_lower_95 DESC LIMIT %s"
         return self.query(sql, [limit])
-    
+
     def get_demographics(self, drug_name: str) -> Optional[pd.DataFrame]:
-        """Get demographics for a drug"""
         sql = """
-        SELECT 
+        SELECT
             patient_age_group,
             patient_sex,
             patient_count,
@@ -120,10 +114,23 @@ class SnowflakeClient:
         """
         return self.query(sql, [drug_name])
     
+    def get_signal_counts(self, drug_name: str = None, min_prr: float = 2.0):
+        """True totals for the KPI cards (not limited by the table's LIMIT)."""
+        base = """
+        SELECT COUNT(*) AS n,
+               COUNT(DISTINCT drug_name) AS drugs,
+               ROUND(MEDIAN(prr), 1) AS med_prr,
+               ROUND(MAX(prr), 1) AS max_prr
+        FROM agg_disproportionality
+        WHERE is_signal = TRUE AND prr >= %s
+        """
+        if drug_name:
+            return self.query(base + " AND drug_name = %s", [min_prr, drug_name])
+        return self.query(base, [min_prr])
+
     def get_polypharmacy_signals(self, limit: int = 20) -> Optional[pd.DataFrame]:
-        """Get polypharmacy signals (drug combinations)"""
         sql = """
-        SELECT 
+        SELECT
             drug_1_name,
             drug_2_name,
             co_occurrence_count,
