@@ -1,19 +1,21 @@
 -- Gold: per-drug safety profile with REPORT-level rates (monitored cohort, min 30 reports)
-
+-- Co-authored with CoCo
 {{ config(materialized='table') }}
 
 -- Collapse to one row per report first, so multi-reaction reports don't inflate rates
 -- (a single report with 54 reactions previously counted as 54 "events").
+-- NOTE: openFDA seriousness fields are coded 1=yes, 2=no (not 0/1), so EVERY flag must be
+-- compared to = 1 before aggregating, or rates exceed 100%.
 WITH report_level AS (
   SELECT
     drug_name,
     report_id,
-    MAX(serious)              AS serious,
-    MAX(is_fatal)             AS is_fatal,
-    MAX(is_hospitalized)      AS is_hospitalized,
-    MAX(is_life_threatening)  AS is_life_threatening,
-    MAX(is_disability)        AS is_disability,
-    MAX(patient_age)          AS patient_age
+    MAX(CASE WHEN serious = 1             THEN 1 ELSE 0 END)  AS is_serious,
+    MAX(CASE WHEN is_fatal = 1            THEN 1 ELSE 0 END)  AS is_fatal,
+    MAX(CASE WHEN is_hospitalized = 1     THEN 1 ELSE 0 END)  AS is_hospitalized,
+    MAX(CASE WHEN is_life_threatening = 1 THEN 1 ELSE 0 END)  AS is_life_threatening,
+    MAX(CASE WHEN is_disability = 1       THEN 1 ELSE 0 END)  AS is_disability,
+    MAX(patient_age)                                          AS patient_age
   FROM {{ ref('stg_fda_adverse_events') }}
   WHERE drug_name IS NOT NULL
   GROUP BY drug_name, report_id
@@ -22,8 +24,8 @@ WITH report_level AS (
 SELECT
   drug_name,
   COUNT(*)                                                       AS total_reports,
-  SUM(serious)                                                   AS serious_reports,
-  ROUND(100.0 * SUM(serious) / COUNT(*), 2)                      AS serious_rate_pct,
+  SUM(is_serious)                                                AS serious_reports,
+  ROUND(100.0 * SUM(is_serious) / COUNT(*), 2)                   AS serious_rate_pct,
   SUM(is_fatal)                                                  AS fatal_reports,
   ROUND(100.0 * SUM(is_fatal) / COUNT(*), 2)                     AS fatal_rate_pct,
   SUM(is_hospitalized)                                           AS hospitalized_reports,
