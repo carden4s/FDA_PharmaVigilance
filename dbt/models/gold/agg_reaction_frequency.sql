@@ -1,3 +1,5 @@
+-- Gold: top reactions per monitored drug (excludes administrative MedDRA terms)
+
 {{ config(materialized='table') }}
 
 SELECT
@@ -15,5 +17,15 @@ FROM {{ ref('stg_fda_adverse_events') }}
 
 WHERE drug_name IS NOT NULL
   AND reaction_name IS NOT NULL
+  AND drug_name IN (SELECT drug_name FROM {{ ref('monitored_drugs') }})
+  AND reaction_name NOT IN (
+    'OFF LABEL USE',
+    'PRODUCT USE ISSUE',
+    'PRODUCT USE IN UNAPPROVED INDICATION',
+    'DRUG USE FOR UNKNOWN INDICATION',
+    'NO ADVERSE EVENT',
+    'INCORRECT DOSE ADMINISTERED',
+    'PRODUCT DOSE OMISSION ISSUE'
+  )
 
 GROUP BY drug_name, reaction_name

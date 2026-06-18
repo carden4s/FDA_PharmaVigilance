@@ -1,3 +1,5 @@
+-- Gold: age/sex demographic breakdown per monitored drug (min report base to avoid N=1 noise)
+
 {{ config(materialized='table') }}
 
 SELECT
@@ -17,5 +19,7 @@ FROM {{ ref('stg_fda_adverse_events') }}
 
 WHERE drug_name IS NOT NULL
   AND patient_age_group IS NOT NULL
+  AND drug_name IN (SELECT drug_name FROM {{ ref('monitored_drugs') }})
 
 GROUP BY drug_name, patient_age_group, patient_sex
+HAVING COUNT(DISTINCT report_id) >= 10
