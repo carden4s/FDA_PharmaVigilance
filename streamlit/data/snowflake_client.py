@@ -113,6 +113,20 @@ class SnowflakeClient:
         ORDER BY patient_age_group, patient_sex
         """
         return self.query(sql, [drug_name])
+    
+    def get_signal_counts(self, drug_name: str = None, min_prr: float = 2.0):
+        """True totals for the KPI cards (not limited by the table's LIMIT)."""
+        base = """
+        SELECT COUNT(*) AS n,
+               COUNT(DISTINCT drug_name) AS drugs,
+               ROUND(MEDIAN(prr), 1) AS med_prr,
+               ROUND(MAX(prr), 1) AS max_prr
+        FROM agg_disproportionality
+        WHERE is_signal = TRUE AND prr >= %s
+        """
+        if drug_name:
+            return self.query(base + " AND drug_name = %s", [min_prr, drug_name])
+        return self.query(base, [min_prr])
 
     def get_polypharmacy_signals(self, limit: int = 20) -> Optional[pd.DataFrame]:
         sql = """
