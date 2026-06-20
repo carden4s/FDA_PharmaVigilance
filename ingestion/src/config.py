@@ -37,7 +37,7 @@ class Config:
     # Monitored Drugs
     MONITORED_DRUGS = [
         {"name": name, "fda_id": name.upper(), "priority": "normal"}
-        for name in [
+                for name in [
             "Aspirin", "Ibuprofen", "Acetaminophen", "Naproxen", "Metformin",
             "Atorvastatin", "Simvastatin", "Rosuvastatin", "Lisinopril", "Losartan",
             "Amlodipine", "Metoprolol", "Hydrochlorothiazide", "Furosemide", "Warfarin",
@@ -46,6 +46,18 @@ class Config:
             "Prednisone", "Levothyroxine", "Albuterol", "Insulin", "Tramadol",
             "Amoxicillin", "Azithromycin", "Ciprofloxacin", "Methotrexate", "Adalimumab",
             "Etanercept", "Rituximab", "Tocilizumab", "Apixaban", "Rivaroxaban",
+            "Valsartan", "Olmesartan", "Ramipril", "Enalapril", "Carvedilol",
+            "Diltiazem", "Verapamil", "Spironolactone", "Digoxin", "Hydralazine",
+            "Clonidine", "Glipizide", "Glimepiride", "Sitagliptin", "Empagliflozin",
+            "Dapagliflozin", "Semaglutide", "Liraglutide", "Pioglitazone", "Ezetimibe",
+            "Pravastatin", "Fenofibrate", "Dabigatran", "Edoxaban", "Enoxaparin",
+            "Heparin", "Ticagrelor", "Prasugrel", "Venlafaxine", "Bupropion",
+            "Mirtazapine", "Trazodone", "Quetiapine", "Aripiprazole", "Olanzapine",
+            "Risperidone", "Lamotrigine", "Lorazepam", "Alprazolam", "Clonazepam",
+            "Zolpidem", "Topiramate", "Levetiracetam", "Oxycodone", "Hydrocodone",
+            "Morphine", "Fentanyl", "Celecoxib", "Diclofenac", "Meloxicam",
+            "Doxycycline", "Cephalexin", "Levofloxacin", "Metronidazole", "Clindamycin",
+            "Nitrofurantoin", "Vancomycin", "Acyclovir", "Esomeprazole", "Ondansetron",
         ]
     ]
     
