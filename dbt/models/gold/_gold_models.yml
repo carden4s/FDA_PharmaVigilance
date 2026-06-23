@@ -77,6 +77,8 @@ models:
           expression: "prr_lower_95 <= prr AND prr <= prr_upper_95"
       - dbt_utils.expression_is_true:
           expression: "ror_lower_95 <= ror AND ror <= ror_upper_95"
+      - dbt_utils.expression_is_true:
+          expression: "chi_squared >= 0"
     columns:
       - name: drug_name
         tests:
@@ -93,9 +95,7 @@ models:
         tests:
           - not_null
       - name: chi_squared
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "chi_squared >= 0"
+        description: Pearson chi-squared statistic (checked >= 0 at model level)
       - name: signal_flag
         description: Conservative consensus (PRR criterion AND ROR criterion)
 
