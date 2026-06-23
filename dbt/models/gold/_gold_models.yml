@@ -18,7 +18,7 @@ models:
               field: event_id
 
   - name: agg_reaction_frequency
-    description: Top reactions per drug
+    description: Top reactions per drug (monitored cohort, admin MedDRA terms excluded)
     tests:
       - dbt_utils.expression_is_true:
           expression: "reaction_frequency_pct >= 0 AND reaction_frequency_pct <= 100"
@@ -28,10 +28,12 @@ models:
           - not_null
 
   - name: agg_drug_safety_profile
-    description: Safety metrics per drug
+    description: Report-level safety metrics per drug (monitored cohort)
     tests:
       - dbt_utils.expression_is_true:
           expression: "serious_rate_pct >= 0 AND serious_rate_pct <= 100"
+      - dbt_utils.expression_is_true:
+          expression: "fatal_rate_pct >= 0 AND fatal_rate_pct <= 100"
     columns:
       - name: drug_name
         tests:
@@ -39,14 +41,14 @@ models:
           - not_null
 
   - name: agg_patient_demographics
-    description: Patient demographics per drug
+    description: Patient demographics per drug (monitored cohort, min 10 reports)
     columns:
       - name: drug_name
         tests:
           - not_null
 
   - name: agg_polypharmacy_signals
-    description: Multi-drug signals
+    description: Multi-drug co-occurrence signals
     columns:
       - name: drug_1_name
         tests:
@@ -56,12 +58,25 @@ models:
           - not_null
 
   - name: agg_disproportionality
-    description: PRR/ROR disproportionality signals per drug-reaction pair
+    description: >
+      Rigorous PRR/ROR disproportionality per drug-reaction pair (monitored cohort).
+      Exposes the full 2x2 table (a=reports_with_both, b, c, d), 95% confidence
+      intervals for PRR and ROR, chi-squared, and signal criteria flags.
     tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - drug_name
+            - reaction_name
       - dbt_utils.expression_is_true:
-          expression: "prr >= 0"
+          expression: "reports_with_both >= 0 AND b >= 0 AND c >= 0 AND d >= 0"
       - dbt_utils.expression_is_true:
-          expression: "ror >= 0"
+          expression: "reports_with_both >= 3"
+      - dbt_utils.expression_is_true:
+          expression: "prr >= 0 AND ror >= 0"
+      - dbt_utils.expression_is_true:
+          expression: "prr_lower_95 <= prr AND prr <= prr_upper_95"
+      - dbt_utils.expression_is_true:
+          expression: "ror_lower_95 <= ror AND ror <= ror_upper_95"
       - dbt_utils.expression_is_true:
           expression: "chi_squared >= 0"
     columns:
@@ -71,5 +86,35 @@ models:
       - name: reaction_name
         tests:
           - not_null
+      - name: prr
+        description: Proportional Reporting Ratio (not null because a >= 3 enforced)
+        tests:
+          - not_null
+      - name: ror
+        description: Reporting Odds Ratio (not null because a >= 3 enforced)
+        tests:
+          - not_null
       - name: chi_squared
-        description: Chi-squared statistic for the drug-reaction signal
+        description: Pearson chi-squared statistic (checked >= 0 at model level)
+      - name: signal_flag
+        description: Conservative consensus (PRR criterion AND ROR criterion)
+
+  - name: val_positive_controls
+    description: >
+      Validation against documented FDA drug-reaction associations (positive controls).
+      Shows whether the pipeline flags known signals - i.e. face validity.
+    columns:
+      - name: drug_name
+        tests:
+          - not_null
+      - name: reaction_name
+        tests:
+          - not_null
+
+  - name: val_data_quality
+    description: >
+      Data-quality metrics across silver/gold for the thesis limitations chapter.
+    columns:
+      - name: metric
+        tests:
+          - not_null

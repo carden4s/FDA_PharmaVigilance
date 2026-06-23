@@ -1,0 +1,7 @@
+DRUG_NAME,REACTION_NAME,EXPECTED_SIGNAL,SOURCE
+ROSUVASTATIN,RHABDOMYOLYSIS,TRUE,FDA statin label: rhabdomyolysis class warning
+SIMVASTATIN,RHABDOMYOLYSIS,TRUE,FDA statin label: dose-dependent myopathy/rhabdomyolysis
+WARFARIN,GASTROINTESTINAL HAEMORRHAGE,TRUE,FDA warfarin boxed warning: major bleeding
+ASPIRIN,UPPER GASTROINTESTINAL HAEMORRHAGE,TRUE,FDA/NSAID label: upper GI bleeding risk
+NAPROXEN,UPPER GASTROINTESTINAL HAEMORRHAGE,TRUE,FDA NSAID class: GI hemorrhage warning
+ATORVASTATIN,RHABDOMYOLYSIS,TRUE,Documented class effect; expected but diluted by statin background
