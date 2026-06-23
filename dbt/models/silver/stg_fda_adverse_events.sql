@@ -59,15 +59,17 @@ cleaned AS (
     COALESCE(seriousness_lifethreatening, 0) as is_life_threatening,
     COALESCE(seriousness_disability, 0) as is_disability,
 
-    -- Patient demographics (age normalized to years)
-    NULLIF(ROUND(patient_age_years, 1), 0) as patient_age,
+    -- Patient demographics (age normalized to years; implausible ages -> NULL/Unknown)
+    CASE WHEN patient_age_years > 0 AND patient_age_years <= 150
+         THEN ROUND(patient_age_years, 1) END as patient_age,
     CASE
-      WHEN patient_age_years IS NULL THEN 'Unknown'
+      WHEN patient_age_years IS NULL OR patient_age_years <= 0 OR patient_age_years > 150 THEN 'Unknown'
       WHEN patient_age_years < 18 THEN '0-18'
       WHEN patient_age_years < 40 THEN '19-40'
       WHEN patient_age_years < 60 THEN '41-60'
       ELSE '60+'
     END as patient_age_group,
+    
     CASE
       WHEN patient_sex = 1 THEN 'Male'
       WHEN patient_sex = 2 THEN 'Female'
