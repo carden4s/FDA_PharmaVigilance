@@ -45,6 +45,7 @@ def create_scatter_chart(data, x, y, title, size=None, color=None, labels=None):
                      labels=labels or {}, color_continuous_scale="Blues")
     return _style(fig)
 
+
 def create_forest_plot(data, point, lower, upper, label, title, ref_line=1.0, height=600):
     """Forest plot: point estimate with 95% CI error bars (log x-axis, reference line).
 
