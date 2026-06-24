@@ -95,6 +95,20 @@ def main():
 
     drugs_to_ingest = [{"name": args.drug}] if args.drug else config.MONITORED_DRUGS
 
+    # Idempotent resume: skip drugs already loaded for this window (unless truncating)
+    if not args.truncate and not args.dry_run and source_date:
+        already = loader.get_loaded_drugs(source_date)
+        if already:
+            before = len(drugs_to_ingest)
+            drugs_to_ingest = [d for d in drugs_to_ingest if d["name"] not in already]
+            skipped = before - len(drugs_to_ingest)
+            if skipped:
+                logger.info(f"Skipping {skipped} drug(s) already loaded for source_date={source_date}")
+        if not drugs_to_ingest:
+            logger.info("All requested drugs already loaded for this window. Nothing to do.")
+            loader.close()
+            return 0
+        
     total_records = 0
     total_loaded = 0
     start_time = time.time()

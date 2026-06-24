@@ -119,8 +119,13 @@ class SnowflakeLoader:
             logger.error(f"Failed to truncate table: {str(e)}")
             return False
 
-    def load_batch(self, records: List[Dict[str, Any]], batch_size: int = 16000) -> Dict[str, Any]:
-        """Bulk-load records to Snowflake using write_pandas."""
+    def load_batch(self, records: List[Dict[str, Any]], batch_size: int = 16000,
+                   chunk_rows: int = 100000) -> Dict[str, Any]:
+        """Bulk-load records to Snowflake using write_pandas.
+
+        Records are streamed in row-chunks (chunk_rows) so a single big drug that
+        flattens to millions of rows never builds one giant DataFrame in memory
+        (previously caused MemoryError / 'Unable to allocate output buffer')."""
         if not self.conn:
             if not self.connect():
                 return {"success": False, "total": 0, "loaded": 0, "failed": 0}
@@ -129,31 +134,56 @@ class SnowflakeLoader:
         if total == 0:
             return {"success": True, "total": 0, "loaded": 0, "failed": 0}
 
-        # Build a DataFrame; uppercase columns to match unquoted Snowflake identifiers
-        df = pd.DataFrame(records)
-        df.columns = [c.upper() for c in df.columns]
+        logger.info(f"Loading {total} records in row-chunks of {chunk_rows} "
+                    f"(write_pandas chunks of {batch_size})")
 
-        logger.info(f"Loading {total} records via write_pandas (chunks of {batch_size})")
-
+        loaded = 0
+        all_ok = True
         try:
-            success, n_chunks, n_rows, _ = write_pandas(
-                conn=self.conn,
-                df=df,
-                table_name=self.TABLE_NAME,
-                database=self.config.SNOWFLAKE_DATABASE,
-                schema=self.config.SNOWFLAKE_SCHEMA,
-                chunk_size=batch_size,
-                quote_identifiers=False,
-            )
-            loaded = int(n_rows)
+            for start in range(0, total, chunk_rows):
+                df = pd.DataFrame(records[start:start + chunk_rows])
+                df.columns = [c.upper() for c in df.columns]
+                success, n_chunks, n_rows, _ = write_pandas(
+                    conn=self.conn,
+                    df=df,
+                    table_name=self.TABLE_NAME,
+                    database=self.config.SNOWFLAKE_DATABASE,
+                    schema=self.config.SNOWFLAKE_SCHEMA,
+                    chunk_size=batch_size,
+                    quote_identifiers=False,
+                )
+                loaded += int(n_rows)
+                all_ok = all_ok and bool(success)
+                del df
             failed = total - loaded
-            logger.info(f"write_pandas: success={success}, chunks={n_chunks}, rows={loaded}")
-            return {"success": bool(success) and failed == 0,
+            logger.info(f"write_pandas: success={all_ok}, rows={loaded}/{total}")
+            return {"success": all_ok and failed == 0,
                     "total": total, "loaded": loaded, "failed": failed}
         except Exception as e:
             logger.error(f"Bulk load failed: {str(e)}")
-            return {"success": False, "total": total, "loaded": 0, "failed": total}
+            return {"success": False, "total": total, "loaded": loaded, "failed": total - loaded}
 
+    def get_loaded_drugs(self, source_date: str) -> set:
+        """Return source_drug values already loaded for a source_date, so re-runs
+        can skip them (idempotent resume). Returns empty set on any issue."""
+        if not source_date:
+            return set()
+        if not self.conn and not self.connect():
+            return set()
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                f"SELECT DISTINCT source_drug "
+                f"FROM {self.config.SNOWFLAKE_DATABASE}.{self.config.SNOWFLAKE_SCHEMA}.{self.TABLE_NAME} "
+                f"WHERE source_date = %s",
+                [source_date],
+            )
+            loaded = {row[0] for row in cursor.fetchall() if row[0] is not None}
+            cursor.close()
+            return loaded
+        except Exception as e:
+            logger.warning(f"Could not read already-loaded drugs (will not skip): {str(e)}")
+            return set()
     def close(self):
         """Close Snowflake connection."""
         if self.conn:
