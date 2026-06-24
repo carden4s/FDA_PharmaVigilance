@@ -62,8 +62,10 @@ if sig is not None and len(sig) > 0:
         create_forest_plot(sig, point, lo, hi, "PAR",
                            f"{metric} con IC 95% — top {topn} señales"),
         use_container_width=True)
-    note("Línea de referencia en 1: valores a la derecha indican reporte desproporcionado. "
-         "Un intervalo de confianza que no cruza 1 respalda la señal. Escala logarítmica.")
+    note("Línea de referencia en 1: un IC que no cruza 1 indica una **asociación de notificación "
+         "desproporcionada** (una hipótesis a investigar), **no** una relación causal ni una reacción "
+         "adversa confirmada. Valores muy altos suelen reflejar **confusión por indicación** "
+         "(la enfermedad tratada) o términos no clínicos, no mayor peligrosidad. Escala logarítmica.")
 else:
     st.info("No hay señales disponibles. Ejecute `dbt build` de `agg_disproportionality`.")
 
