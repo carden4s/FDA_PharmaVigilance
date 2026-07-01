@@ -24,6 +24,16 @@ rxn AS (                             -- reactions within the universe, non-ADR t
         'INTERNATIONAL NORMALISED RATIO INCREASED', 'INTERNATIONAL NORMALISED RATIO ABNORMAL',
         'X-RAY ABNORMAL', 'ANTI-CYCLIC CITRULLINATED PEPTIDE ANTIBODY POSITIVE', 'CONGENITAL ANOMALY'
       )
+            -- Laboratory / measurement results are never clinical reactions -> exclude by pattern.
+      -- (Disease/indication terms and real ADRs are NOT excluded; see docs/LIMITATIONS.md.)
+      AND NOT (
+        s.reaction_name ILIKE '%TEST ABNORMAL'
+        OR s.reaction_name ILIKE '%FACTOR POSITIVE'
+        OR s.reaction_name ILIKE 'C-REACTIVE PROTEIN%'
+        OR s.reaction_name ILIKE '%SEDIMENTATION RATE%'
+        OR s.reaction_name ILIKE '%JOINT COUNT INCREASED%'
+      )
+
 ),
 n_total AS (
     SELECT COUNT(*) AS n FROM universe
