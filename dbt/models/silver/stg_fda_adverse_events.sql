@@ -27,6 +27,7 @@ WITH src AS (
 
   WHERE safetyreportid IS NOT NULL
     AND drug_name IS NOT NULL
+    AND NOT REGEXP_LIKE(UPPER(TRIM(drug_name)), '^[0-9 .]+$')   -- descarta nombres basura numéricos ("7")
     AND TRY_TO_DATE(received_date, 'YYYYMMDD') >= DATEADD(year, -3, CURRENT_DATE)
 
   {% if is_incremental() %}
