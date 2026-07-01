@@ -18,6 +18,7 @@ WITH report_level AS (
     MAX(patient_age)                                          AS patient_age
   FROM {{ ref('stg_fda_adverse_events') }}
   WHERE drug_name IS NOT NULL
+    AND is_suspect = 1
   GROUP BY drug_name, report_id
 )
 

@@ -45,7 +45,7 @@ def nested_drug_event():
             "patientonsetage": "45",          # string age
             "patientonsetageunit": "801",      # 801 = year
             "patientsex": "0",                # 0 = Unknown
-            "drug": [{"medicinalproduct": "ASPIRIN"}],
+            "drug": [{"medicinalproduct": "ASPIRIN", "drugcharacterization": "1"}],
             "reaction": [{"reactionmeddrapt": "Nausea", "reactionoutcome": "2"}]
         }
     }
@@ -128,3 +128,13 @@ def test_to_int(value, expected):
 ])
 def test_to_float(value, expected):
     assert _to_float(value) == expected
+
+def test_flatten_captures_drug_characterization(nested_drug_event):
+    """openFDA drugcharacterization must be captured and coerced to int (1=suspect)."""
+    row = DataProcessor.flatten_event(nested_drug_event)[0]
+    assert row["drug_characterization"] == 1
+
+def test_flatten_drug_characterization_absent_is_none(sample_event):
+    """Drugs without drugcharacterization yield None, not an error."""
+    row = DataProcessor.flatten_event(sample_event)[0]
+    assert row["drug_characterization"] is None

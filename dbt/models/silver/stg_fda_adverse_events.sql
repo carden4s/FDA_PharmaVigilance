@@ -80,6 +80,9 @@ cleaned AS (
     -- Drug information: keep raw (upper/trim) for traceability + a cleaned key for canonical lookup
     UPPER(TRIM(drug_name)) as drug_name_raw,
     {{ normalize_drug_name('drug_name') }} as drug_name_clean,
+    drug_characterization,
+    -- openFDA role: 1=suspect, 2=concomitant, 3=interacting. Outcome/PRR analysis uses suspect only.
+    CASE WHEN drug_characterization = 1 THEN 1 ELSE 0 END as is_suspect,
     drug_route,
     TRY_TO_DECIMAL(drug_dose_value, 18, 4) as drug_dosage_value,
     drug_dose_unit as drug_dosage_unit,
