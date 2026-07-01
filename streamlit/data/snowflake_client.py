@@ -141,3 +141,26 @@ class SnowflakeClient:
         LIMIT %s
         """
         return self.query(sql, [limit])
+    def get_signals_for_plot(self, limit: int = 15) -> Optional[pd.DataFrame]:
+        """Top consensus signals with PRR/ROR point estimates and 95% CIs (for forest plot)."""
+        sql = """
+        SELECT drug_name, reaction_name, reports_with_both AS a,
+               prr, prr_lower_95, prr_upper_95,
+               ror, ror_lower_95, ror_upper_95, chi_squared
+        FROM agg_disproportionality
+        WHERE signal_flag = TRUE
+        ORDER BY ror_lower_95 DESC
+        LIMIT %s
+        """
+        return self.query(sql, [limit])
+
+    def get_positive_controls(self) -> Optional[pd.DataFrame]:
+        """Positive-control validation results (face validity)."""
+        sql = """
+        SELECT drug_name, reaction_name, expected_signal, a,
+               prr, prr_lower_95, ror, ror_lower_95, chi_squared,
+               prr_signal, ror_signal, signal_flag, detected, validation_note
+        FROM val_positive_controls
+        ORDER BY detected DESC, prr DESC
+        """
+        return self.query(sql)

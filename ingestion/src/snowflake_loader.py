@@ -75,6 +75,7 @@ class SnowflakeLoader:
             patient_sex INT,
             patient_weight DECIMAL(10, 2),
             drug_name VARCHAR,
+            drug_characterization INT,
             drug_route VARCHAR,
             drug_dose_value VARCHAR,
             drug_dose_unit VARCHAR,

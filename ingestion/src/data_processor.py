@@ -99,6 +99,7 @@ class DataProcessor:
 
                     # Drug data
                     "drug_name": drug.get("medicinalproduct"),
+                    "drug_characterization": _to_int(drug.get("drugcharacterization")),
                     "drug_dose_value": drug.get("drugseparatedosagenumber"),
                     "drug_dose_unit": drug.get("drugdosagetext"),
                     "drug_route": drug.get("drugadministrationroute"),

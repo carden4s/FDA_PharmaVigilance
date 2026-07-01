@@ -19,6 +19,8 @@ sources:
               - not_null
           - name: drug_name
             description: Name of suspect drug
+          - name: drug_characterization
+            description: openFDA role code (1=suspect, 2=concomitant, 3=interacting)
           - name: patient_onsetage
             description: Patient age at symptom onset (value; unit in patient_onsetage_unit)
           - name: patient_onsetage_unit

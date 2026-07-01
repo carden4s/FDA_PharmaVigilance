@@ -34,6 +34,17 @@ COLUMN_LABELS = {
     "CHI_SQUARED": "Chi²",
     "IS_SIGNAL": "Señal",
     "TOTAL_REPORTS": "Reportes totales",
+    "A": "a (ambos)",
+    "PRR_UPPER_95": "PRR (IC95% sup.)",
+    "ROR_UPPER_95": "ROR (IC95% sup.)",
+    "PRR_LOWER_95": "PRR (IC95% inf.)",
+    "PRR_SIGNAL": "Criterio PRR",
+    "ROR_SIGNAL": "Criterio ROR",
+    "SIGNAL_FLAG": "Señal",
+    "DETECTED": "Detectado",
+    "EXPECTED_SIGNAL": "Esperado",
+    "SOURCE": "Fuente",
+    "VALIDATION_NOTE": "Nota de validación",
 }
 
 SEX_ES = {"Male": "Masculino", "Female": "Femenino", "Unknown": "Desconocido"}

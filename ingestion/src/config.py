@@ -38,26 +38,15 @@ class Config:
     MONITORED_DRUGS = [
         {"name": name, "fda_id": name.upper(), "priority": "normal"}
                 for name in [
-            "Aspirin", "Ibuprofen", "Acetaminophen", "Naproxen", "Metformin",
-            "Atorvastatin", "Simvastatin", "Rosuvastatin", "Lisinopril", "Losartan",
-            "Amlodipine", "Metoprolol", "Hydrochlorothiazide", "Furosemide", "Warfarin",
-            "Clopidogrel", "Omeprazole", "Pantoprazole", "Gabapentin", "Pregabalin",
-            "Sertraline", "Fluoxetine", "Citalopram", "Escitalopram", "Duloxetine",
-            "Prednisone", "Levothyroxine", "Albuterol", "Insulin", "Tramadol",
-            "Amoxicillin", "Azithromycin", "Ciprofloxacin", "Methotrexate", "Adalimumab",
-            "Etanercept", "Rituximab", "Tocilizumab", "Apixaban", "Rivaroxaban",
-            "Valsartan", "Olmesartan", "Ramipril", "Enalapril", "Carvedilol",
-            "Diltiazem", "Verapamil", "Spironolactone", "Digoxin", "Hydralazine",
-            "Clonidine", "Glipizide", "Glimepiride", "Sitagliptin", "Empagliflozin",
-            "Dapagliflozin", "Semaglutide", "Liraglutide", "Pioglitazone", "Ezetimibe",
-            "Pravastatin", "Fenofibrate", "Dabigatran", "Edoxaban", "Enoxaparin",
-            "Heparin", "Ticagrelor", "Prasugrel", "Venlafaxine", "Bupropion",
-            "Mirtazapine", "Trazodone", "Quetiapine", "Aripiprazole", "Olanzapine",
-            "Risperidone", "Lamotrigine", "Lorazepam", "Alprazolam", "Clonazepam",
-            "Zolpidem", "Topiramate", "Levetiracetam", "Oxycodone", "Hydrocodone",
-            "Morphine", "Fentanyl", "Celecoxib", "Diclofenac", "Meloxicam",
-            "Doxycycline", "Cephalexin", "Levofloxacin", "Metronidazole", "Clindamycin",
-            "Nitrofurantoin", "Vancomycin", "Acyclovir", "Esomeprazole", "Ondansetron",
+            "Aspirin", "Ibuprofen", "Naproxen", "Acetaminophen",
+            "Atorvastatin", "Simvastatin", "Rosuvastatin",
+            "Warfarin", "Clopidogrel", "Apixaban",
+            "Metformin",
+            "Lisinopril", "Amlodipine", "Metoprolol", "Furosemide",
+            "Omeprazole",
+            "Gabapentin", "Sertraline",
+            "Prednisone",
+            "Levothyroxine",
         ]
     ]
     
